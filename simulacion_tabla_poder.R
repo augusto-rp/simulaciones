@@ -71,6 +71,103 @@ database_long$sexo[database_long$sexo == "Hombre"] <- "h"
 df<- database_long
 rm(database_long)
 
+
+#Crear valores del numero de estimulo
+levels_p<-c("p1", "p2", "p3", "p4")
+pairs <- expand.grid(ao_1_stim = levels_p, ao_2_stim = levels_p) %>%
+  filter(ao_1_stim != ao_2_stim)
+
+##This function generates every possible combination between two (or more) vectors. Since you passed levels_p (which is $p1, p2, p3, p4$) twice, it creates a grid of $4 \times 4 = 16$ rows.
+##This is the "Constraint Layer." It looks at that grid and removes the "diagonal"—the cases where the stimulus for $ao\_1$ is the same as $ao\_2$.
+
+set.seed(532) 
+balanced_assignments <- pairs %>%
+  slice(rep(1:n(), each = 25)) %>%
+  sample_frac(1) %>%
+  mutate(id = 1:300)
+
+df_f<- df %>%
+  left_join(balanced_assignments, by = "id") %>%
+  mutate(
+    estimulo = case_when(
+      medicion == "ao_1" ~ as.character(ao_1_stim),
+      medicion == "ao_2" ~ as.character(ao_2_stim),
+      medicion == "ao_3" ~ "np1",
+      medicion == "ao_4" ~ "np2",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  # limpia tabla
+  dplyr::select(-ao_1_stim, -ao_2_stim)
+
+# 3. Verification
+# Check counts for ao_1 and ao_2
+df_f %>% 
+  filter(medicion %in% c("ao_1", "ao_2")) %>% 
+  group_by(medicion, estimulo) %>% 
+  tally()
+#Todo en orden
+
+
+df<- df_f
+rm(df_f, individuos, pairs, balanced_assignments)
+
+
+#Ahora agregar otras covariables
+
+set.seed(532)
+individual_data <- data.frame(id = 1:300) %>%
+  mutate(
+    # Distribuion normal
+    id_pol = round(rnorm(300, mean = 3, sd = 1)),
+    id_pol = pmin(pmax(id_pol, 1), 5), # Ensures they stay in 1:5
+    
+    interes_pol = round(rnorm(300, mean = 3, sd = 1)),
+    interes_pol = pmin(pmax(interes_pol, 1), 5),
+    
+    # Asegurarse que sean numeros enteros
+    relevancia_1 = sample(1:4, 300, replace = TRUE),
+    relevancia_2 = sample(1:4, 300, replace = TRUE),
+    relevancia_3 = sample(1:4, 300, replace = TRUE),
+    relevancia_4 = sample(1:4, 300, replace = TRUE)
+  )
+
+# Volver a unir
+df <- df %>%
+  left_join(individual_data, by = "id")
+
+
+### Crear variable de cinismo
+set.seed(532)
+
+cinismo_data <- data.frame(id = 1:300) %>%
+  mutate(
+    # Create a "Latent Trait" (the individual's average cynicism level)
+    # Using 1-5 distribution to keep it within scale bounds
+    trait_base = runif(300, 1, 5),
+    
+    # Generate 4 measurements by adding a small amount of noise to the base trait
+    # A smaller 'sd' in rnorm here results in a higher correlation
+    cinismo_1 = round(trait_base + rnorm(300, mean = 0, sd = 0.5)),
+    cinismo_2 = round(trait_base + rnorm(300, mean = 0, sd = 0.5)),
+    cinismo_3 = round(trait_base + rnorm(300, mean = 0, sd = 0.5)),
+    cinismo_4 = round(trait_base + rnorm(300, mean = 0, sd = 0.5))
+  ) %>%
+  # Clamp the results to ensure they stay strictly within 1-5
+  mutate(across(starts_with("cinismo"), ~ pmin(pmax(.x, 1), 5))) %>%
+  dplyr::select(-trait_base) # Remove the helper column
+
+# 2. Join to your main dataframe
+df <- df %>%
+  left_join(cinismo_data, by = "id")
+
+# 3. Verify the Correlation
+# This should now show values in the 0.6 - 0.9 range
+cor(cinismo_data[,-1])
+
+
+
+ ###### 
 # ESTIMACION DE MODELO ----------------------------------------------------
 
 
