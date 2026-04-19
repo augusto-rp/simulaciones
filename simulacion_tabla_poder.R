@@ -166,6 +166,46 @@ df <- df %>%
 cor(cinismo_data[,-1])
 
 
+#Finalmente agregar personalidad
+
+set.seed(532)
+
+perso_data <- data.frame(id = 1:300) %>%
+  mutate(
+    # Creo rasgo latente (valores promedio)
+    # Usando rango de valores posible
+    trait_base_p = runif(300, 1, 5),
+    
+    # Generate 4 measurements by adding a small amount of noise to the base trait
+    # A smaller 'sd' in rnorm here results in a higher correlation
+    per_1 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5)),
+    per_2 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5)),
+    per_3 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5)),
+    per_4 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5)),
+    per_5 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5)),
+    per_6 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5)),
+    per_7 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5)),
+    per_8 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5)),
+    per_9 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5)),
+    per_10 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5)),
+    per_11 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5)),
+    per_12 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5)),
+    per_13 = round(trait_base_p + rnorm(300, mean = 0, sd = 0.5))
+  ) %>%
+  # Clamp the results to ensure they stay strictly within 1-5
+  mutate(across(starts_with("per"), ~ pmin(pmax(.x, 1), 5))) %>%
+  dplyr::select(-trait_base_p) # Remove the helper column
+
+# 2. Join to your main dataframe
+df <- df %>%
+  left_join(perso_data, by = "id")
+
+# 3. Verify the Correlation
+# This should now show values in the 0.6 - 0.9 range
+cor(perso_data[,-1])
+
+rm(cinismo_data, individual_data, perso_data)
+
 
  ###### 
 # ESTIMACION DE MODELO ----------------------------------------------------
