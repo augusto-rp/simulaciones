@@ -207,6 +207,40 @@ cor(perso_data[,-1])
 rm(cinismo_data, individual_data, perso_data)
 
 
+##################CALCULO DE PODER ESTADISTICO##################
+library(Superpower)
+
+mu_ordinal <- c(0, 0.242,  # Grupo 1 entre condiciones :efecto de interaccion [primer nivel de primer factor, primer nivel segundo factor] 
+                0, 0)      # Grupo 2 entre condiciones :sin interaccion, o mas leve que en grupo 1   [segundo nivel del primer factor, segundo nivel del segundo factor]  
+
+#Definir diseño anona
+diseno <- ANOVA_design(design = "2b*2w",
+                           n = 300, # Calculo inicial, va a ir variando despues
+                           mu = mu_ordinal,
+                           sd = 1, #Asume homogeneidad de varianza, en LMM esto no se cumple. Pero esto es un calculo mas limitado pues aun no hay piloto
+                           r = 0.5, #se pueden ver mas correlaciones, ver documentacion pero vamos a mantener solo una
+                           labelnames = c("claves", "humor", "nohumor",
+                                          "tema", "politico", "nopolitico"),
+                           plot = TRUE)
+
+#Sobre correlaciones The number of possible comparisons is the product of the levels of all factors squared minus the product of all factors, divided by two. 
+#For a 2x2 design where each factor has two levels, this is: (((2*2)^2)-(2*2))/2
+
+#Hay dos formas de calcular el poder usando esta libreria 
+#ANOVA_power que toma modelo anterior y hace nsimulaciones
+#ANOVA_exact que permite hacer estimaciones en base a un dataset :usar este más adelante
+#Peeeero tambien puedo plotear el poder y ver como varia
+
+
+
+
+
+
+
+
+
+
+
  ###### 
 # ESTIMACION DE MODELO ----------------------------------------------------
 
@@ -219,17 +253,72 @@ library(ez)
 library (psych)
 
 #Exploracion de descriptivos
-describe(df_larga)
-str(df_larga)
+describe(df)
+str(df)
 
 #describir promedios de ao_value de acuerdo a niveles de group_topic
 
-dif_promedios <- df_larga |>
-  group_by(group_topic) |>
+
+dif_promedios <- df |>
+  # 1. Create a new factor column based on the 'estimulos' values
+  mutate(factor_type = case_when(
+    estimulo %in% c("p1", "p2", "p3", "p4") ~ "p",
+    estimulo %in% c("np1", "np2")           ~ "np",
+    TRUE                                     ~ "other" # Safety net
+  )) |>
+  # 2. Group by both the Participant and the new Factor
+  group_by(id, factor_type) |> 
+  # 3. Calculate the mean for those 2 measurements per person
   summarise(
-    mean_ao_value = mean(ao_value, na.rm = TRUE)
+    mean_ao_value = mean(valor, na.rm = TRUE),
+    .groups = "drop"
   )
-print(dif_promedios )
+
+print(dif_promedios)
+
+
+df <- df |>
+  # Create the factor first
+  mutate(contenido_tipo = if_else(estimulo %in% c("p1", "p2", "p3", "p4"), "p", "np")) |>
+  # Group by ID and the NEW factor
+  group_by(id, contenido_tipo) |>
+  # Mutate adds the mean to every row without collapsing the df
+  mutate(promedio_ao = mean(valor, na.rm = TRUE)) |>
+  ungroup()
+
+head(df)
+
+#mover estas variables creadas mas cerca de inicio
+df <- df |>
+  relocate(31, .before = 8) |>
+  relocate(32, .before = 9)
+
+rm(dif_promedios)
+
+#reordenar otras covariables
+#df <- df |>
+ # relocate(31:35, .before = 6)
+
+
+#########CALCULO DE PODER ESTADISTICO
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #########Examinacion de criterios ANOVA
