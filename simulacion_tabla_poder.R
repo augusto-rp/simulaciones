@@ -210,8 +210,8 @@ rm(cinismo_data, individual_data, perso_data)
 ##################CALCULO DE PODER ESTADISTICO##################
 library(Superpower)
 
-mu_ordinal <- c(0, 0.242,  # Grupo 1 entre condiciones :efecto de interaccion [primer nivel de primer factor, primer nivel segundo factor] 
-                0, 0)      # Grupo 2 entre condiciones :sin interaccion, o mas leve que en grupo 1   [segundo nivel del primer factor, segundo nivel del segundo factor]  
+mu_ordinal <- c(0.484, 0.121,  # Grupo 1 entre condiciones :efecto de interaccion [primer nivel de primer factor, primer nivel segundo factor] 
+                0.121, 0)      # Grupo 2 entre condiciones :sin interaccion, o mas leve que en grupo 1   [segundo nivel del primer factor, segundo nivel del segundo factor]  
 
 #Definir diseño anona
 diseno <- ANOVA_design(design = "2b*2w",
@@ -229,8 +229,16 @@ diseno <- ANOVA_design(design = "2b*2w",
 #Hay dos formas de calcular el poder usando esta libreria 
 #ANOVA_power que toma modelo anterior y hace nsimulaciones
 #ANOVA_exact que permite hacer estimaciones en base a un dataset :usar este más adelante
+
+#En cualquiera de estos casos tendria que ir probando una y otra vez distintos N hasta encontrar el valor necesario.
 #Peeeero tambien puedo plotear el poder y ver como varia
 
+poder_resultados <- plot_power(diseno,
+                            min_n = 150,
+                            max_n = 500,
+                            desired_power = 80,
+                            exact = TRUE, 
+                            plot = TRUE)
 
 
 
