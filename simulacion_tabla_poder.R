@@ -241,11 +241,20 @@ poder_resultados <- plot_power(diseno,
                             plot = TRUE)
 
 
+n_valores<-poder_resultados$power_df #aca puedo ver valores de poder para cada n desde 150 a 500
 
 
+#Simulacion de Monte Carlo con 300
 
+set.seed(888)
+simulacion_300<- ANOVA_power(diseno, 
+                                  nsims = 5000, 
+                                  alpha_level = 0.05,
+                                  verbose = FALSE)
 
+simulacion_300
 
+??power_simulate
 
 
 
